@@ -1,0 +1,12 @@
+{
+  "name": "hnefatafl",
+  "version": "1.0.0",
+  "description": "An online Hnefatafl game.",
+  "main": "index.js",
+  "repository": "https://github.com/nilq/hnefatafl",
+  "author": "nilq <i.am.niels.nielsen@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "^3.24.1"
+  }
+}

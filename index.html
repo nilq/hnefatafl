@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+        <title>
+            Hnefatafl Online
+        </title>
+
+        <script>
+            const WIDTH  = 11
+            const HEIGHT = 11
+
+            // 4: THRONE
+            // 3: WHITE
+            // 2: BLACK
+            // 1: CASTLE
+            // 0: BLANK FIELD
+            const BOARD = [
+                [ 1, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1 ], // 1
+                [ 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0 ], // 2
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], // 3
+                [ 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 2 ], // 4
+                [ 2, 0, 0, 0, 3, 3, 3, 0, 0, 0, 2 ], // 5
+                [ 2, 2, 0, 3, 3, 4, 3, 3, 0, 2, 2 ], // 6
+                [ 2, 0, 0, 0, 3, 3, 3, 0, 0, 0, 2 ], // 7
+                [ 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 2 ], // 8
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], // 9
+                [ 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0 ], // 10
+                [ 1, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1 ], // 11
+            ]
+            
+            var config = {
+                type: Phaser.AUTO,
+                width: 1100,
+                height: 1100,
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 200 }
+                    }
+                },
+                scene: {
+                    preload: preload,
+                    create: create
+                },
+                parent: 'game'
+            }
+
+            var game = new Phaser.Game(config)
+
+            function preload () {
+                this.load.setBaseURL('http://0.0.0.0:8000/')
+
+                this.load.image('white_home', 'assets/white_home.png')
+                this.load.image('black_home', 'assets/black_home.png')
+                this.load.image('throne', 'assets/throne.png')
+                this.load.image('blank', 'assets/blank.png')
+
+                this.load.image('white_soldier', 'assets/pieces/white_soldier.png')
+                this.load.image('black_soldier', 'assets/pieces/black_soldier.png')
+
+                this.load.image('king', 'assets/pieces/king.png')
+
+            }
+
+            function create () {
+                this.cameras.main.backgroundColor.setTo(255,255,255);
+
+                const white_soldiers = this.add.group();
+                const black_soldiers = this.add.group();
+
+                for(var y = 0; y < WIDTH; y++) {
+                    for(var x = 0; x < HEIGHT; x++) {
+                        var field = BOARD[x][y]
+
+                        var fx = 100 * x + 50
+                        var fy = 100 * y + 50
+
+
+                        var field_sprite
+
+                        switch(field) {
+                            case 1: // CASTLE NOT THRONE, BUT THRONE SPRITE STILL
+                                this.add.sprite(fx, fy, 'throne')
+
+                                break
+
+                            case 2:
+                                this.add.sprite(fx, fy, 'black_home')
+
+                                var a = black_soldiers.create(fx, fy, 'black_soldier').setInteractive()
+                                this.input.setDraggable(a);
+
+                                break
+
+                            case 3:
+                                this.add.sprite(fx, fy, 'white_home')
+
+                                var a = white_soldiers.create(fx, fy, 'white_soldier').setInteractive()
+                                this.input.setDraggable(a);
+
+                                break
+
+                            case 4:
+                                this.add.sprite(fx, fy, 'throne')
+
+                                var a = black_soldiers.create(fx, fy, 'king').setInteractive()
+                                this.input.setDraggable(a);
+
+                                break
+                        }
+
+                        this.add.sprite(fx, fy, 'blank')
+                    }
+                }
+
+                this.input.on('dragstart', function (pointer, gameObject) {
+                    gameObject.setTint(0xDDDDDD);
+                    gameObject.setDepth(100);
+                });
+
+                this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+
+                    gameObject.x = Phaser.Math.Snap.To(dragX + 50, 100) - 50
+                    gameObject.y = Phaser.Math.Snap.To(dragY + 50, 100) - 50
+
+                });
+
+                this.input.on('dragend', function (pointer, gameObject) {
+                    gameObject.clearTint();
+                    gameObject.setDepth(10);
+                });
+            }
+
+        </script>
+
+        <style>
+            .everything {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="everything">
+            <h1>Hnefatafl</h1>
+            <hr>
+            <br>
+            
+            <div id="game"></div>
+        </div>
+    </body>
+</html>
