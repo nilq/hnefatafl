@@ -1,286 +1,149 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-analytics.js"></script>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+
         
         <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
         <title>
             Hnefatafl Online
         </title>
 
-        <script>
-            function clamp(num, min, max) {
-                return num <= min ? min : num >= max ? max : num;
-            }
-
-
-            var PLAYER = "black"
-
-            const WIDTH  = 11
-            const HEIGHT = 11
-
-            // 5: KING
-            // 4: THRONE
-            // 3: WHITE
-            // 2: BLACK
-            // 1: CASTLE
-            // 0: BLANK FIELD
-            const BOARD = [
-                [ 1, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1 ], // 1
-                [ 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0 ], // 2
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], // 3
-                [ 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 2 ], // 4
-                [ 2, 0, 0, 0, 3, 3, 3, 0, 0, 0, 2 ], // 5
-                [ 2, 2, 0, 3, 3, 4, 3, 3, 0, 2, 2 ], // 6
-                [ 2, 0, 0, 0, 3, 3, 3, 0, 0, 0, 2 ], // 7
-                [ 2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 2 ], // 8
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], // 9
-                [ 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0 ], // 10
-                [ 1, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1 ], // 11
-            ]
-
-            var PIECE_DATA = []
-
-            for(var x = 0; x < WIDTH; x++) {
-                var row = []
-
-                for(var y = 0; y < HEIGHT; y++) {
-                    row.push(0)
-                }
-
-                PIECE_DATA.push(row)
-            }
-
-            var config = {
-                type: Phaser.AUTO,
-                width: 1100,
-                height: 1100,
-                physics: {
-                    default: 'arcade',
-                    arcade: {
-                        gravity: { y: 200 }
-                    }
-                },
-                scene: {
-                    preload: preload,
-                    create: create
-                },
-                parent: 'game'
-            }
-
-            var game = new Phaser.Game(config)
-
-            function preload () {
-                this.load.setBaseURL('http://0.0.0.0:8000/')
-
-                this.load.image('white_home', 'assets/white_home.png')
-                this.load.image('black_home', 'assets/black_home.png')
-                this.load.image('throne', 'assets/throne.png')
-                this.load.image('blank', 'assets/blank.png')
-
-                this.load.image('white_soldier', 'assets/pieces/white_soldier.png')
-                this.load.image('black_soldier', 'assets/pieces/black_soldier.png')
-
-                this.load.image('king', 'assets/pieces/king.png')
-            }
-
-            function create () {
-                this.cameras.main.backgroundColor.setTo(255, 255, 255)
-
-                const white_soldiers = this.add.group()
-                const black_soldiers = this.add.group()
-
-                for(var y = 0; y < WIDTH; y++) {
-                    for(var x = 0; x < HEIGHT; x++) {
-                        var field = BOARD[y][x]
-
-                        var fx = 100 * x + 50
-                        var fy = 100 * y + 50
-
-
-                        var field_sprite
-
-                        switch(field) {
-                            case 1: // CASTLE NOT THRONE, BUT THRONE SPRITE STILL
-                                this.add.sprite(fx, fy, 'throne')
-
-                                break
-
-                            case 2:
-                                this.add.sprite(fx, fy, 'black_home')
-
-                                var a = black_soldiers.create(fx, fy, 'black_soldier').setInteractive()
-
-                                a.setData('type', "black")
-                                a.setData('direction', "none")
-
-                                a.setData('data_x', x)
-                                a.setData('data_y', y)
-
-                                PIECE_DATA[x][y] = 2
-
-                                this.input.setDraggable(a)
-
-                                break
-
-                            case 3:
-                                this.add.sprite(fx, fy, 'white_home')
-
-                                var a = white_soldiers.create(fx, fy, 'white_soldier').setInteractive()
-
-                                a.setData('type', "white")
-                                a.setData('direction', "none")
-
-                                a.setData('data_x', x)
-                                a.setData('data_y', y)
-
-                                PIECE_DATA[x][y] = 3
-
-                                this.input.setDraggable(a)
-
-                                break
-
-                            case 4:
-                                this.add.sprite(fx, fy, 'throne')
-
-                                var a = black_soldiers.create(fx, fy, 'king').setInteractive()
-
-                                a.setData('type', "king")
-                                a.setData('direction', "none")
-
-                                a.setData('data_x', x)
-                                a.setData('data_y', y)
-
-                                PIECE_DATA[x][y] = 5
-
-                                this.input.setDraggable(a)
-
-                                break
-                        }
-
-                        this.add.sprite(fx, fy, 'blank')
-                    }
-                }
-
-                this.input.on('dragstart', function (pointer, gameObject, dragX, dragY) {
-                    gameObject.setTint(0xDDDDDD)
-                    gameObject.setDepth(100)
-
-                    gameObject.setData("ox", gameObject.x)
-                    gameObject.setData("oy", gameObject.y)
-
-                    var x = gameObject.getData('data_x')
-                    var y = gameObject.getData('data_y')
-
-                    PIECE_DATA[x][y] = 0 // YOU ARE PICKING IT UP!!
-                })
-
-                this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-                    if((PLAYER === "white" && gameObject.getData("type") === "black") ||
-                            (PLAYER === "black" && gameObject.getData("type") !== "black")) {
-
-                        return
-                    }
-
-                    var ox = gameObject.x
-                    var oy = gameObject.y
-
-                    var dir = gameObject.getData('direction')
-
-                    if(dir === 'x' || dir === 'none') {
-                        var x = Phaser.Math.Snap.To(dragX + 50, 100) - 50
-                        var cx = clamp(Math.floor((x + 50) / 100) - 1, 1, WIDTH)
-
-                        var other_cx = clamp(Math.floor((gameObject.x + 50) / 100) - 1, 1, WIDTH)
-
-                        if(PIECE_DATA[cx][gameObject.getData('data_y')] === 0) {
-
-                            while (gameObject.x !== x) {
-                                if (gameObject.x < x && PIECE_DATA[other_cx + 1][gameObject.getData('data_y')] === 0) {
-                                    gameObject.x++
-                                } else if(gameObject.x > x && PIECE_DATA[other_cx - 1][gameObject.getData('data_y')] === 0) {
-                                    gameObject.x--
-                                } else {
-                                    break
-                                }
-                            }
-                        }
-
-                        if(gameObject.x !== ox) {
-                            gameObject.setData('direction', 'x')
-                        }
-                    }
-
-                    if(dir === 'y' || dir === 'none') {
-                        var y = Phaser.Math.Snap.To(dragY + 50, 100) - 50
-                        var cy = clamp(Math.floor((y + 50) / 100) - 1, 1, HEIGHT)
-
-                        var other_cy = clamp(Math.floor((gameObject.y + 50) / 100) - 1, 1, HEIGHT)
-
-                        if(PIECE_DATA[gameObject.getData('data_x')][cy] === 0) {
-
-                            while (gameObject.y !== y) {
-                                if (gameObject.y < y && PIECE_DATA[gameObject.getData('data_x')][other_cy + 1] === 0) {
-                                    gameObject.y++
-                                } else if(gameObject.y > y && PIECE_DATA[gameObject.getData('data_x')][other_cy - 1] === 0) {
-                                    gameObject.y--
-                                } else {
-                                    break
-                                }
-                            }
-                        }
-
-                        if(gameObject.y !== oy) {
-                            gameObject.setData('direction', 'y')
-                        }
-                    }
-
-                    if(gameObject.x === gameObject.getData('ox') && gameObject.y === gameObject.getData('oy')) {
-                        gameObject.setData('direction', 'none')
-                    }
-                })
-
-                this.input.on('dragend', function (pointer, gameObject) {
-                    gameObject.clearTint()
-                    gameObject.setDepth(10)
-
-                    gameObject.setData('direction', 'none')
-
-                    if(gameObject.x !== gameObject.getData('ox') || gameObject.y !== gameObject.getData('oy')) {
-                        var x = (gameObject.x - 50) / 100
-                        var y = (gameObject.y - 50) / 100
-
-                        gameObject.setData("data_x", x)
-                        gameObject.setData("data_y", y)
-
-                        if(gameObject.getData("type") === "white") {
-                            PIECE_DATA[x][y] = 3
-
-                            PLAYER = "black"
-                        } else {
-                            PIECE_DATA[x][y] = 2
-
-                            PLAYER = "white"
-                        }
-                    }
-                })
-            }
-        </script>
-
         <style>
-            .everything {
+            body {
+                background-color: black;
+                zoom: 60%;
+            }
+
+            @font-face {
+                font-family: Hereot;
+                src: url(Hereot.ttf);
+            }
+
+            .center {
                 text-align: center;
             }
+
+            h1 {
+                font-family: Hereot;
+                font-size: 100px;
+                color: white;
+            }
+
+            button {
+                height: 80px;
+                width: 420px;
+                border: 2px solid white;
+                color: white;
+                background-color: black;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 40px;
+            }
+
+            button:hover {
+                cursor: pointer;
+                background-color: #555;
+            }
+
+            input {
+                padding-left: 20px;
+                height: 80px;
+                border: 2px solid white;
+                background-color: black;
+
+                color: white;
+
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 40px;
+            }
+
+            ::-webkit-input-placeholder { /* Edge */
+                color: white;
+            }
+
+            :-ms-input-placeholder { /* Internet Explorer 10-11 */
+                color: white;
+            }
+
+            ::placeholder {
+                color: white;
+            }
+
+            .space-right {
+                margin-right: 20px;
+            }
+
+            #code {
+                font-family: Hereot;
+                color: white;
+                font-size: 70px;
+
+                margin-top: 10px;
+            }
+
+            h3 {
+                font-family: Helvetica;
+                color: white;
+
+                font-size: 60px;
+            }
+
         </style>
     </head>
     <body>
-        <div class="everything">
-            <h1>Hnefatafl</h1>
-            <hr>
-            <br>
-            
+
+        <div class="center">
+
+            <div style="background-color: black;">
+                <h1>Hnefatafl</h1>
+
+                <hr>
+            </div>
+
+            <br><br><br>
+
             <div id="game"></div>
+
+            <div id="home">
+                <button onclick="createGame()" class="space-right">NEW GAME</button>
+                <button onclick="joinGame()">JOIN GAME</button>
+            </div>
+
+            <div id="creatingGame" style="display: none">
+                <form class="chooseName" onSubmit="return showCode()">
+                    <input id="createNameBox" class="field-box space-right" type="text" placeholder="NAME" maxlength="12">
+                    <button type="submit">Enter</button>
+                </form>
+            </div>
+
+            <div id="showCode" style="display: none">
+                <h3 class="code-help">GAME CODE: <p id="code"></p></h3>
+                
+                <button class="btn btn-home btn-back" onclick="home()">Back</button>
+            </div>
+
+            <div id="joiningGame" style="display: none">
+                <form class="chooseName">
+                    <input id="joinNameBox" class="field-box btn-name" type="text" placeholder="NAME" maxlength="12">
+                    <input id="codeBox" class="field-box" type="text" placeholder="GAME CODE" maxlength="5">
+                    <br>
+                    <br>
+                    <button type="submit" onClick="return joinStart()">Enter</button>
+                    <button onclick="home()">Back</button>
+                </form>
+            </div>
+
+            <div id="game"></div>
+
+            <script src="socket.io-2.0.3.js"></script>
+
+            <script>
+                var socket = io()
+            </script>
+
+            <script src="home.js"></script>
+            <script src="hnefatafl.js"></script>
         </div>
     </body>
 </html>

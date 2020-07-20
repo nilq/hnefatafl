@@ -7,6 +7,8 @@
   "author": "nilq <i.am.niels.nielsen@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "phaser": "^3.24.1"
+    "express": "^4.17.1",
+    "phaser": "^3.24.1",
+    "socket.io": "^2.3.0"
   }
 }
