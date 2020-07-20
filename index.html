@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.16.1/firebase-analytics.js"></script>
+        
         <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
         <title>
             Hnefatafl Online
         </title>
 
         <script>
+            function clamp(num, min, max) {
+                return num <= min ? min : num >= max ? max : num;
+            }
+
+
             var PLAYER = "black"
 
             const WIDTH  = 11
             const HEIGHT = 11
 
+            // 5: KING
             // 4: THRONE
             // 3: WHITE
             // 2: BLACK
@@ -37,7 +46,7 @@
                 var row = []
 
                 for(var y = 0; y < HEIGHT; y++) {
-                    row.push(1)
+                    row.push(0)
                 }
 
                 PIECE_DATA.push(row)
@@ -109,6 +118,8 @@
                                 a.setData('data_x', x)
                                 a.setData('data_y', y)
 
+                                PIECE_DATA[x][y] = 2
+
                                 this.input.setDraggable(a)
 
                                 break
@@ -124,6 +135,8 @@
                                 a.setData('data_x', x)
                                 a.setData('data_y', y)
 
+                                PIECE_DATA[x][y] = 3
+
                                 this.input.setDraggable(a)
 
                                 break
@@ -134,6 +147,12 @@
                                 var a = black_soldiers.create(fx, fy, 'king').setInteractive()
 
                                 a.setData('type', "king")
+                                a.setData('direction', "none")
+
+                                a.setData('data_x', x)
+                                a.setData('data_y', y)
+
+                                PIECE_DATA[x][y] = 5
 
                                 this.input.setDraggable(a)
 
@@ -170,16 +189,46 @@
                     var dir = gameObject.getData('direction')
 
                     if(dir === 'x' || dir === 'none') {
-                        gameObject.x = Phaser.Math.Snap.To(dragX + 50, 100) - 50
+                        var x = Phaser.Math.Snap.To(dragX + 50, 100) - 50
+                        var cx = clamp(Math.floor((x + 50) / 100) - 1, 1, WIDTH)
+
+                        var other_cx = clamp(Math.floor((gameObject.x + 50) / 100) - 1, 1, WIDTH)
+
+                        if(PIECE_DATA[cx][gameObject.getData('data_y')] === 0) {
+
+                            while (gameObject.x !== x) {
+                                if (gameObject.x < x && PIECE_DATA[other_cx + 1][gameObject.getData('data_y')] === 0) {
+                                    gameObject.x++
+                                } else if(gameObject.x > x && PIECE_DATA[other_cx - 1][gameObject.getData('data_y')] === 0) {
+                                    gameObject.x--
+                                } else {
+                                    break
+                                }
+                            }
+                        }
+
+                        if(gameObject.x !== ox) {
+                            gameObject.setData('direction', 'x')
+                        }
                     }
 
                     if(dir === 'y' || dir === 'none') {
-                        gameObject.y = Phaser.Math.Snap.To(dragY + 50, 100) - 50
-                    }
+                        var y = Phaser.Math.Snap.To(dragY + 50, 100) - 50
+                        var cy = clamp(Math.floor((y + 50) / 100) - 1, 1, HEIGHT)
 
-                    if(dir === "none") {
-                        if(gameObject.x !== ox) {
-                            gameObject.setData('direction', 'x')
+                        var other_cy = clamp(Math.floor((gameObject.y + 50) / 100) - 1, 1, HEIGHT)
+
+                        if(PIECE_DATA[gameObject.getData('data_x')][cy] === 0) {
+
+                            while (gameObject.y !== y) {
+                                if (gameObject.y < y && PIECE_DATA[gameObject.getData('data_x')][other_cy + 1] === 0) {
+                                    gameObject.y++
+                                } else if(gameObject.y > y && PIECE_DATA[gameObject.getData('data_x')][other_cy - 1] === 0) {
+                                    gameObject.y--
+                                } else {
+                                    break
+                                }
+                            }
                         }
 
                         if(gameObject.y !== oy) {
@@ -217,7 +266,6 @@
                     }
                 })
             }
-
         </script>
 
         <style>
