@@ -122,4 +122,14 @@ io.on('connection', function(socket) {
         game.playerBlack.socket.emit('move', data)
         game.playerWhite.socket.emit('move', data)
     })
+
+    socket.on('kill', function(data) {
+        game.playerBlack.socket.emit('kill', data)
+        game.playerWhite.socket.emit('kill', data)
+    })
+
+    socket.on('win', function(data) {
+        game.playerBlack.socket.emit('win', data)
+        game.playerWhite.socket.emit('win', data)
+    })
 })

@@ -53,4 +53,4 @@ socket.on('startGame', function(data) {
     document.getElementById('joiningGame').style.display = 'none';
     start(data.code, data.color, data.blackName, data.whiteName);
   }
-});
+})
